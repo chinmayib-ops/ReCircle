@@ -3,9 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
-  Dimensions,
   TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Dimensions,
   Image,
   Animated,
   PanResponder,
@@ -60,7 +61,8 @@ const mockItems: Item[] = [
   },
 ];
 
-export default function HomeScreen() {
+export default function Index() {
+  const [showHome, setShowHome] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userPoints, setUserPoints] = useState(450);
   const position = useRef(new Animated.ValueXY()).current;
@@ -95,7 +97,7 @@ export default function HomeScreen() {
     if (direction === 'right') {
       setUserPoints(prev => prev + mockItems[currentIndex].ecoPoints);
     }
-    
+
     setCurrentIndex(prev => (prev + 1) % mockItems.length);
     position.setValue({ x: 0, y: 0 });
     opacity.setValue(1);
@@ -122,7 +124,25 @@ export default function HomeScreen() {
 
   const renderCard = (item: Item, index: number) => {
     if (index < currentIndex) return null;
-    
+
+    const cardView = (
+      <View style={styles.cardContent}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <View style={styles.pointsBadge}>
+            <Recycle size={16} color="#10B981" />
+            <Text style={styles.pointsText}>{item.ecoPoints} pts</Text>
+          </View>
+        </View>
+        <Text style={styles.cardDescription}>{item.description}</Text>
+        <View style={styles.cardMeta}>
+          <Text style={styles.category}>{item.category}</Text>
+          <Text style={styles.condition}>{item.condition}</Text>
+          <Text style={styles.distance}>{item.distance}</Text>
+        </View>
+      </View>
+    );
+
     if (index === currentIndex) {
       return (
         <Animated.View
@@ -131,21 +151,7 @@ export default function HomeScreen() {
           {...panResponder.panHandlers}
         >
           <Image source={{ uri: item.image }} style={styles.cardImage} />
-          <View style={styles.cardContent}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <View style={styles.pointsBadge}>
-                <Recycle size={16} color="#10B981" />
-                <Text style={styles.pointsText}>{item.ecoPoints} pts</Text>
-              </View>
-            </View>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-            <View style={styles.cardMeta}>
-              <Text style={styles.category}>{item.category}</Text>
-              <Text style={styles.condition}>{item.condition}</Text>
-              <Text style={styles.distance}>{item.distance}</Text>
-            </View>
-          </View>
+          {cardView}
         </Animated.View>
       );
     }
@@ -153,24 +159,29 @@ export default function HomeScreen() {
     return (
       <View key={item.id} style={[styles.card, { opacity: 0.8, transform: [{ scale: 0.95 }] }]}>
         <Image source={{ uri: item.image }} style={styles.cardImage} />
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <View style={styles.pointsBadge}>
-              <Recycle size={16} color="#10B981" />
-              <Text style={styles.pointsText}>{item.ecoPoints} pts</Text>
-            </View>
-          </View>
-          <Text style={styles.cardDescription}>{item.description}</Text>
-          <View style={styles.cardMeta}>
-            <Text style={styles.category}>{item.category}</Text>
-            <Text style={styles.condition}>{item.condition}</Text>
-            <Text style={styles.distance}>{item.distance}</Text>
-          </View>
-        </View>
+        {cardView}
       </View>
     );
   };
+
+  if (!showHome) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <View style={styles.innerContainer}>
+          <Text style={styles.title}>
+            Reduce. Reuse. <Text style={styles.green}>ReCircle</Text>.
+          </Text>
+          <Text style={styles.subtitle}>
+            Join the circular revolution and make sustainability a lifestyle.
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={() => setShowHome(true)}>
+            <Text style={styles.buttonText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -223,6 +234,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F9FAFB',
+    justifyContent: 'center',
+  },
+  innerContainer: {
+    paddingHorizontal: 32,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: '#000',
+  },
+  green: {
+    color: '#2ecc71',
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#555',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 40,
+  },
+  button: {
+    backgroundColor: '#2ecc71',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    elevation: 2,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
@@ -236,11 +280,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1F2937',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginTop: 4,
   },
   pointsContainer: {
     alignItems: 'center',

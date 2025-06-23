@@ -11,7 +11,18 @@ import {
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, FlipHorizontal, Scan, CircleCheck as CheckCircle, Circle as XCircle, Lightbulb, Upload, ImageIcon } from 'lucide-react-native';
+import * as FileSystem from 'expo-file-system';
+import axios from 'axios';
+import {
+  Camera,
+  FlipHorizontal,
+  Scan,
+  CircleCheck as CheckCircle,
+  Circle as XCircle,
+  Lightbulb,
+  Upload,
+  ImageIcon,
+} from 'lucide-react-native';
 
 interface DetectionResult {
   item: string;
@@ -25,9 +36,66 @@ export default function CameraScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
-  const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
+  const [detectionResult, setDetectionResult] =
+    useState<DetectionResult | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+
+  const takePictureAndDetect = async () => {
+    if (!cameraRef.current) return;
+
+    setIsScanning(true);
+
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: true,
+      });
+
+      setSelectedImage(photo.uri);
+
+      const backendResult = await sendToBackend(photo.uri);
+
+      if (backendResult) {
+        setDetectionResult(backendResult);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to capture or process image.');
+      console.error('Camera capture error:', error);
+    }
+
+    setIsScanning(false);
+  };
+
+  const sendToBackend = async (uri: string) => {
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    const fileUri = fileInfo.uri;
+    const formData = new FormData();
+
+    formData.append('file', {
+      uri: fileUri,
+      name: 'image.jpg',
+      type: 'image/jpeg',
+    } as any);
+
+    try {
+      const response = await axios.post(
+        'http://localhost:8000/detect/',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert('Error', 'Failed to get detection result.');
+      return null;
+    }
+  };
 
   // Mock detection results for demo
   const mockDetections: { [key: string]: DetectionResult } = {
@@ -40,8 +108,8 @@ export default function CameraScreen() {
         'Recycle at nearest plastic collection center',
         'Reuse as plant watering container',
         'Create a bird feeder',
-        'Use for storage organization'
-      ]
+        'Use for storage organization',
+      ],
     },
     chair: {
       item: 'Wooden Chair',
@@ -52,8 +120,8 @@ export default function CameraScreen() {
         'Donate to local charity',
         'Upcycle with new paint',
         'Convert to plant stand',
-        'Repurpose as decorative piece'
-      ]
+        'Repurpose as decorative piece',
+      ],
     },
     book: {
       item: 'Books',
@@ -64,9 +132,9 @@ export default function CameraScreen() {
         'Donate to library or school',
         'Share with book exchange',
         'Create art projects with pages',
-        'Recycle if damaged beyond repair'
-      ]
-    }
+        'Recycle if damaged beyond repair',
+      ],
+    },
   };
 
   if (!permission) {
@@ -80,9 +148,13 @@ export default function CameraScreen() {
           <Camera size={80} color="#10B981" />
           <Text style={styles.permissionTitle}>Camera Access Required</Text>
           <Text style={styles.permissionMessage}>
-            We need camera access to scan and identify items for recycling and reuse suggestions.
+            We need camera access to scan and identify items for recycling and
+            reuse suggestions.
           </Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+          >
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
           </TouchableOpacity>
         </View>
@@ -91,12 +163,12 @@ export default function CameraScreen() {
   }
 
   const toggleCameraFacing = () => {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
+    setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
   const simulateDetection = () => {
     setIsScanning(true);
-    
+
     // Simulate AI processing delay
     setTimeout(() => {
       const items = Object.keys(mockDetections);
@@ -108,9 +180,9 @@ export default function CameraScreen() {
 
   const pickImage = async () => {
     try {
-      // Request media library permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
       if (status !== 'granted') {
         Alert.alert(
           'Permission Required',
@@ -120,7 +192,6 @@ export default function CameraScreen() {
         return;
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -129,13 +200,22 @@ export default function CameraScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
-        // Simulate detection process for uploaded image
-        simulateDetection();
+        const imageUri = result.assets[0].uri;
+        setSelectedImage(imageUri);
+        setIsScanning(true);
+
+        const backendResult = await sendToBackend(imageUri);
+
+        if (backendResult) {
+          setDetectionResult(backendResult);
+        }
+
+        setIsScanning(false);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      Alert.alert('Error', 'Failed to pick or process image.');
       console.error('Image picker error:', error);
+      setIsScanning(false);
     }
   };
 
@@ -151,14 +231,20 @@ export default function CameraScreen() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.resultHeader}>
               <Text style={styles.resultTitle}>Detection Result</Text>
-              <TouchableOpacity onPress={resetDetection} style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={resetDetection}
+                style={styles.closeButton}
+              >
                 <XCircle size={24} color="#6B7280" />
               </TouchableOpacity>
             </View>
 
             {selectedImage && (
               <View style={styles.imagePreview}>
-                <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.previewImage}
+                />
                 <Text style={styles.imageLabel}>Analyzed Image</Text>
               </View>
             )}
@@ -168,7 +254,7 @@ export default function CameraScreen() {
               <Text style={styles.confidence}>
                 Confidence: {Math.round(detectionResult.confidence * 100)}%
               </Text>
-              
+
               <View style={styles.statusRow}>
                 <View style={styles.statusItem}>
                   {detectionResult.recyclable ? (
@@ -176,24 +262,36 @@ export default function CameraScreen() {
                   ) : (
                     <XCircle size={20} color="#EF4444" />
                   )}
-                  <Text style={[
-                    styles.statusText,
-                    { color: detectionResult.recyclable ? '#10B981' : '#EF4444' }
-                  ]}>
-                    {detectionResult.recyclable ? 'Recyclable' : 'Not Recyclable'}
+                  <Text
+                    style={[
+                      styles.statusText,
+                      {
+                        color: detectionResult.recyclable
+                          ? '#10B981'
+                          : '#EF4444',
+                      },
+                    ]}
+                  >
+                    {detectionResult.recyclable
+                      ? 'Recyclable'
+                      : 'Not Recyclable'}
                   </Text>
                 </View>
-                
+
                 <View style={styles.statusItem}>
                   {detectionResult.reusable ? (
                     <CheckCircle size={20} color="#3B82F6" />
                   ) : (
                     <XCircle size={20} color="#EF4444" />
                   )}
-                  <Text style={[
-                    styles.statusText,
-                    { color: detectionResult.reusable ? '#3B82F6' : '#EF4444' }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.statusText,
+                      {
+                        color: detectionResult.reusable ? '#3B82F6' : '#EF4444',
+                      },
+                    ]}
+                  >
                     {detectionResult.reusable ? 'Reusable' : 'Not Reusable'}
                   </Text>
                 </View>
@@ -205,7 +303,7 @@ export default function CameraScreen() {
                 <Lightbulb size={24} color="#F59E0B" />
                 <Text style={styles.suggestionsTitle}>Suggestions</Text>
               </View>
-              
+
               {detectionResult.suggestions.map((suggestion, index) => (
                 <View key={index} style={styles.suggestionItem}>
                   <View style={styles.suggestionBullet} />
@@ -216,10 +314,17 @@ export default function CameraScreen() {
 
             <View style={styles.actionButtons}>
               <TouchableOpacity style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>Find Nearby Centers</Text>
+                <Text style={styles.primaryButtonText}>
+                  Find Nearby Centers
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={resetDetection}>
-                <Text style={styles.secondaryButtonText}>Scan Another Item</Text>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={resetDetection}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  Scan Another Item
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -232,7 +337,9 @@ export default function CameraScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Object Scanner</Text>
-        <Text style={styles.headerSubtitle}>Point camera at item to scan or upload image</Text>
+        <Text style={styles.headerSubtitle}>
+          Point camera at item to scan or upload image
+        </Text>
       </View>
 
       <View style={styles.cameraContainer}>
@@ -252,13 +359,16 @@ export default function CameraScreen() {
       </View>
 
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.controlButton} onPress={toggleCameraFacing}>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={toggleCameraFacing}
+        >
           <FlipHorizontal size={24} color="#6B7280" />
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[styles.scanButton, isScanning && styles.scanButtonDisabled]}
-          onPress={simulateDetection}
+          onPress={takePictureAndDetect}
           disabled={isScanning}
         >
           {isScanning ? (
@@ -270,15 +380,22 @@ export default function CameraScreen() {
             </>
           )}
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.controlButton} onPress={pickImage} disabled={isScanning}>
-          <Upload size={24} color={isScanning ? "#9CA3AF" : "#6B7280"} />
+
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={pickImage}
+          disabled={isScanning}
+        >
+          <Upload size={24} color={isScanning ? '#9CA3AF' : '#6B7280'} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.uploadSection}>
-        <TouchableOpacity 
-          style={[styles.uploadButton, isScanning && styles.uploadButtonDisabled]} 
+        <TouchableOpacity
+          style={[
+            styles.uploadButton,
+            isScanning && styles.uploadButtonDisabled,
+          ]}
           onPress={pickImage}
           disabled={isScanning}
         >
@@ -289,7 +406,8 @@ export default function CameraScreen() {
 
       <View style={styles.instructions}>
         <Text style={styles.instructionText}>
-          Position item within the frame and tap scan, or upload an image from your gallery
+          Position item within the frame and tap scan, or upload an image from
+          your gallery
         </Text>
       </View>
     </SafeAreaView>

@@ -26,10 +26,10 @@ import {
 
 interface DetectionResult {
   item: string;
-  recyclable: boolean;
-  reusable: boolean;
+  recyclable?: boolean;
+  reusable?: boolean;
   confidence: number;
-  suggestions: string[];
+  suggestions?: string[];
 }
 
 export default function CameraScreen() {
@@ -41,6 +41,37 @@ export default function CameraScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
+  // Function to send image to backend for detection
+  const sendToBackend = async (uri: string) => {
+    const fileInfo = await FileSystem.getInfoAsync(uri);
+    const fileUri = fileInfo.uri;
+    const formData = new FormData();
+
+    formData.append('file', {
+      uri: fileUri,
+      name: 'image.jpg',
+      type: 'image/jpeg',
+    } as any);
+
+    try {
+      const response = await axios.post(
+        'http://192.168.29.107:8000/detect/', // ipv4 address of pc
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert('Error', 'Failed to get detection result.');
+      return null;
+    }
+  };
+
+  // Scan image and send to backend
   const takePictureAndDetect = async () => {
     if (!cameraRef.current) return;
 
@@ -59,7 +90,8 @@ export default function CameraScreen() {
 
       if (backendResult) {
         setDetectionResult(backendResult);
-        console.log('Detection Result:', backendResult);
+        console.log('Scanned image Backend result:', backendResult);
+        // console.log('Scanned image Detection result:', detectionResult);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to capture or process image.');
@@ -69,32 +101,46 @@ export default function CameraScreen() {
     setIsScanning(false);
   };
 
-  const sendToBackend = async (uri: string) => {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
-    const fileUri = fileInfo.uri;
-    const formData = new FormData();
-
-    formData.append('file', {
-      uri: fileUri,
-      name: 'image.jpg',
-      type: 'image/jpeg',
-    } as any);
-
+  // Pick image from gallery and send to backend
+  const pickImage = async () => {
     try {
-      const response = await axios.post(
-        'http://192.168.29.107:8000/detect/',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Sorry, we need camera roll permissions to select images.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        setSelectedImage(imageUri);
+        setIsScanning(true);
+
+        const backendResult = await sendToBackend(imageUri);
+
+        if (backendResult) {
+          setDetectionResult(backendResult);
+          console.log('Gallery image detection result:', detectionResult);
         }
-      );
-      return response.data;
+
+        setIsScanning(false);
+      }
     } catch (error) {
-      console.error('Upload error:', error);
-      Alert.alert('Error', 'Failed to get detection result.');
-      return null;
+      Alert.alert('Error', 'Failed to pick or process image.');
+      console.error('Image picker error:', error);
+      setIsScanning(false);
     }
   };
 
@@ -167,59 +213,17 @@ export default function CameraScreen() {
     setFacing((current) => (current === 'back' ? 'front' : 'back'));
   };
 
-  const simulateDetection = () => {
-    setIsScanning(true);
+  // const simulateDetection = () => {
+  //   setIsScanning(true);
 
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const items = Object.keys(mockDetections);
-      const randomItem = items[Math.floor(Math.random() * items.length)];
-      setDetectionResult(mockDetections[randomItem]);
-      setIsScanning(false);
-    }, 2000);
-  };
-
-  const pickImage = async () => {
-    try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Sorry, we need camera roll permissions to select images.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setSelectedImage(imageUri);
-        setIsScanning(true);
-
-        const backendResult = await sendToBackend(imageUri);
-
-        if (backendResult) {
-          setDetectionResult(backendResult);
-          console.log('Detection Result:', backendResult);
-        }
-
-        setIsScanning(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to pick or process image.');
-      console.error('Image picker error:', error);
-      setIsScanning(false);
-    }
-  };
+  //   // Simulate AI processing delay
+  //   setTimeout(() => {
+  //     const items = Object.keys(mockDetections);
+  //     const randomItem = items[Math.floor(Math.random() * items.length)];
+  //     setDetectionResult(mockDetections[randomItem]);
+  //     setIsScanning(false);
+  //   }, 2000);
+  // };
 
   const resetDetection = () => {
     setDetectionResult(null);
@@ -227,6 +231,7 @@ export default function CameraScreen() {
   };
 
   if (detectionResult) {
+    console.log('Detection result:', detectionResult);
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.resultContainer}>
@@ -300,7 +305,7 @@ export default function CameraScreen() {
               </View>
             </View>
 
-            {detectionResult?.suggestions?.length > 0 && (
+            {/* {detectionResult?.suggestions?.length > 0 && (
               <View style={styles.suggestionsCard}>
                 <View style={styles.suggestionsHeader}>
                   <Lightbulb size={24} color="#F59E0B" />
@@ -314,7 +319,7 @@ export default function CameraScreen() {
                   </View>
                 ))}
               </View>
-            )}
+            )} */}
 
             <View style={styles.actionButtons}>
               <TouchableOpacity style={styles.primaryButton}>

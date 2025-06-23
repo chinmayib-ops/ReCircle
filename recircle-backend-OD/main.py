@@ -61,17 +61,17 @@ async def detect(file: UploadFile = File(...)):
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     results = model.predict(img)[0]  # Only first image
-    output = []
+    # output = []
 
     for box in results.boxes:
         x1, y1, x2, y2 = box.xyxy[0].tolist()
         conf = float(box.conf[0])
         cls = int(box.cls[0])
-        output.append({
-            "bbox": [x1, y1, x2, y2],
+        output = {
+            # "bbox": [x1, y1, x2, y2],
             "confidence": conf,
-            "class": results.names[cls]
-        })
+            "item": results.names[cls]
+        }
         print("Data sending:", output)
 
     return output

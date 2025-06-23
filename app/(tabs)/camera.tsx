@@ -10,7 +10,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Camera, FlipHorizontal, Scan, CircleCheck as CheckCircle, Circle as XCircle, Lightbulb } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera, FlipHorizontal, Scan, CircleCheck as CheckCircle, Circle as XCircle, Lightbulb, Upload, ImageIcon } from 'lucide-react-native';
 
 interface DetectionResult {
   item: string;
@@ -25,6 +26,7 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const [detectionResult, setDetectionResult] = useState<DetectionResult | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   // Mock detection results for demo
@@ -104,8 +106,42 @@ export default function CameraScreen() {
     }, 2000);
   };
 
+  const pickImage = async () => {
+    try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Sorry, we need camera roll permissions to select images.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+        // Simulate detection process for uploaded image
+        simulateDetection();
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+      console.error('Image picker error:', error);
+    }
+  };
+
   const resetDetection = () => {
     setDetectionResult(null);
+    setSelectedImage(null);
   };
 
   if (detectionResult) {
@@ -119,6 +155,13 @@ export default function CameraScreen() {
                 <XCircle size={24} color="#6B7280" />
               </TouchableOpacity>
             </View>
+
+            {selectedImage && (
+              <View style={styles.imagePreview}>
+                <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+                <Text style={styles.imageLabel}>Analyzed Image</Text>
+              </View>
+            )}
 
             <View style={styles.itemCard}>
               <Text style={styles.itemName}>{detectionResult.item}</Text>
@@ -189,7 +232,7 @@ export default function CameraScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Object Scanner</Text>
-        <Text style={styles.headerSubtitle}>Point camera at item to scan</Text>
+        <Text style={styles.headerSubtitle}>Point camera at item to scan or upload image</Text>
       </View>
 
       <View style={styles.cameraContainer}>
@@ -228,12 +271,25 @@ export default function CameraScreen() {
           )}
         </TouchableOpacity>
         
-        <View style={styles.controlButton} />
+        <TouchableOpacity style={styles.controlButton} onPress={pickImage} disabled={isScanning}>
+          <Upload size={24} color={isScanning ? "#9CA3AF" : "#6B7280"} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.uploadSection}>
+        <TouchableOpacity 
+          style={[styles.uploadButton, isScanning && styles.uploadButtonDisabled]} 
+          onPress={pickImage}
+          disabled={isScanning}
+        >
+          <ImageIcon size={20} color="#10B981" />
+          <Text style={styles.uploadButtonText}>Upload from Gallery</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.instructions}>
         <Text style={styles.instructionText}>
-          Position item within the frame and tap scan to identify recycling options
+          Position item within the frame and tap scan, or upload an image from your gallery
         </Text>
       </View>
     </SafeAreaView>
@@ -376,6 +432,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  uploadSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#F9FAFB',
+  },
+  uploadButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#10B981',
+    borderStyle: 'dashed',
+  },
+  uploadButtonDisabled: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#D1D5DB',
+  },
+  uploadButtonText: {
+    color: '#10B981',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
   instructions: {
     padding: 20,
     backgroundColor: '#F9FAFB',
@@ -403,6 +486,23 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+  },
+  imagePreview: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  previewImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 16,
+    backgroundColor: '#E5E7EB',
+  },
+  imageLabel: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   itemCard: {
     backgroundColor: '#FFFFFF',

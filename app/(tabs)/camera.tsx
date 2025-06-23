@@ -81,7 +81,7 @@ export default function CameraScreen() {
 
     try {
       const response = await axios.post(
-        'http://localhost:8000/detect/',
+        'http://192.168.29.107:8000/detect/',
         formData,
         {
           headers: {
@@ -208,6 +208,7 @@ export default function CameraScreen() {
 
         if (backendResult) {
           setDetectionResult(backendResult);
+          console.log('Detection Result:', backendResult);
         }
 
         setIsScanning(false);
@@ -298,19 +299,21 @@ export default function CameraScreen() {
               </View>
             </View>
 
-            <View style={styles.suggestionsCard}>
-              <View style={styles.suggestionsHeader}>
-                <Lightbulb size={24} color="#F59E0B" />
-                <Text style={styles.suggestionsTitle}>Suggestions</Text>
-              </View>
-
-              {detectionResult.suggestions.map((suggestion, index) => (
-                <View key={index} style={styles.suggestionItem}>
-                  <View style={styles.suggestionBullet} />
-                  <Text style={styles.suggestionText}>{suggestion}</Text>
+            {detectionResult?.suggestions?.length > 0 && (
+              <View style={styles.suggestionsCard}>
+                <View style={styles.suggestionsHeader}>
+                  <Lightbulb size={24} color="#F59E0B" />
+                  <Text style={styles.suggestionsTitle}>Suggestions</Text>
                 </View>
-              ))}
-            </View>
+
+                {detectionResult.suggestions.map((suggestion, index) => (
+                  <View key={index} style={styles.suggestionItem}>
+                    <View style={styles.suggestionBullet} />
+                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <View style={styles.actionButtons}>
               <TouchableOpacity style={styles.primaryButton}>

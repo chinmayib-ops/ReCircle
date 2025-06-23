@@ -50,9 +50,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.get("/")
-# def root():
-#     return {"status": "Backend running"}
+@app.get("/")
+def root():
+    return {"status": "Backend running"}
 
 @app.post("/detect/")
 async def detect(file: UploadFile = File(...)):
@@ -72,5 +72,6 @@ async def detect(file: UploadFile = File(...)):
             "confidence": conf,
             "class": results.names[cls]
         })
+        print(output)
 
     return output

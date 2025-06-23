@@ -59,6 +59,7 @@ export default function CameraScreen() {
 
       if (backendResult) {
         setDetectionResult(backendResult);
+        console.log('Detection Result:', backendResult);
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to capture or process image.');
@@ -193,7 +194,7 @@ export default function CameraScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,

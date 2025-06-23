@@ -72,6 +72,6 @@ async def detect(file: UploadFile = File(...)):
             "confidence": conf,
             "class": results.names[cls]
         })
-        print(output)
+        print("Data sending:", output)
 
     return output

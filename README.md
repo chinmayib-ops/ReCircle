@@ -1,86 +1,97 @@
-Recircle Project
-♻️ Introduction
-Welcome to Recircle! This project is a response to the growing problem of waste and the need for a more sustainable way of living. Recircle is a community-based mobile application designed to facilitate the exchange and recycling of used items, connecting people who want to give away things they no longer need with those who can give them a new life. Our goal is to reduce landfill waste, promote a circular economy, and build stronger, more environmentally-conscious communities.
+# ♻️ Recircle
 
-✨ Key Features
-Recircle comes with a range of features designed to make decluttering and sustainable living easy and enjoyable:
+Welcome to **Recircle** – a community-based mobile application tackling the global waste problem and promoting a circular economy. Recircle connects people looking to give away items they no longer need with those who can reuse them, helping reduce landfill waste and build stronger, environmentally-conscious communities.
 
-Item Listing: Easily post items you want to give away with photos, descriptions, and categories.
+---
 
-Smart Search & Filtering: Find exactly what you're looking for with powerful search and filters based on category, location, and condition.
+## ✨ Key Features
 
-In-App Chat: Securely communicate with other users to arrange pickups and ask questions without sharing personal contact information.
+- **Item Listing**  
+  Post items effortlessly with photos, descriptions, and categories.
 
-Interactive Map View: Browse available items in your local area using a user-friendly map interface.
+- **Smart Search & Filtering**  
+  Quickly find what you need using filters by category, location, and condition.
 
-User Profiles & Ratings: Build trust within the community through profiles that show user history and ratings from past exchanges.
+- **In-App Chat**  
+  Securely communicate with others to arrange pickups—no personal info required.
 
-Wishlists & Notifications: Create a "wishlist" of items you're looking for and get notified when a matching item becomes available near you.
+- **Interactive Map View**  
+  Discover available items nearby via a user-friendly map interface.
 
-Community Hub: A dedicated space to share recycling tips, DIY project ideas using upcycled materials, and local environmental event information.
+- **User Profiles & Ratings**  
+  Build trust through visible user histories and ratings from past exchanges.
 
-Impact Tracker: Visualize your positive environmental impact! The app tracks how many items you've recirculated and estimates the waste you've helped divert from landfills.
+- **Wishlists & Notifications**  
+  Save items to a wishlist and get alerts when similar items are listed nearby.
 
-🚀 Getting Started
-Currently, the Recircle app is in the final stages of development. To get started once it's launched, you will follow these simple steps.
+- **Community Hub**  
+  Share recycling tips, DIY upcycle projects, and info on local environmental events.
 
-Prerequisites
-An iOS or Android smartphone.
+- **Impact Tracker**  
+  Track your eco-impact by seeing how many items you've recirculated and how much waste you’ve diverted from landfills.
 
-An internet connection.
+---
 
-Installation & Setup
-Download the App:
+## 🚀 Getting Started
 
-Find "Recircle" on the Apple App Store or Google Play Store.
+### Prerequisites
 
-Create an Account:
+- An Android or iOS smartphone  
+- A stable internet connection
 
-Sign up using your email address or a social media account.
+### Installation & Setup
 
-Set Your Location:
+1. **Download the App**  
+   Search for **"Recircle"** on the Apple App Store or Google Play Store.(not happening right now for a bit)
 
-Enable location services to see items available for pickup near you.
+2. **Create an Account**  
+   Sign up with your email or through social login.
 
-Start Recircling!
+3. **Set Your Location**  
+   Enable location services to find items near you.
 
-Browse items, post your own, and connect with your community.
+4. **Start Recircling!**  
+   Browse, list, and connect with your local community.
 
-💻 Tech Stack & Design
-The Recircle app is built with a modern, robust technology stack to ensure a smooth and secure user experience.
+---
 
-Frontend: React Native
+## 💻 Tech Stack
 
-Backend: Node.js with Express.js
+| Layer        | Technology                    |
+|--------------|-------------------------------|
+| Frontend     | React Native                  |
+| Backend      | Node.js with Express.js       |
+| Database     | MongoDB                       |
+| Auth         | Firebase Authentication       |
+| Cloud Storage| AWS S3 for image hosting      |
+| Design       | Figma & Canva                 |
 
-Database: MongoDB
 
-Authentication: Firebase Authentication
+---
 
-Cloud Storage: AWS S3 for image hosting
+## 🤝 How to Contribute
 
-Design & Prototyping: The UI/UX was designed in Figma and Canva. You can view the original design concept here.
+We welcome contributions of all kinds—code, design, documentation, or feedback!
 
-🤝 How to Contribute
-We believe in the power of community and are open to contributions to make Recircle even better! If you are interested in contributing, please follow these steps:
+### Contributing Steps
 
-Fork the Repository: Get your own copy of the project.
+1. **Fork the Repository**
+2. **Create a Feature Branch**  
+   `git checkout -b feature/AmazingFeature`
+3. **Commit Your Changes**  
+   `git commit -m 'Add AmazingFeature'`
+4. **Push to Your Branch**  
+   `git push origin feature/AmazingFeature`
+5. **Open a Pull Request**  
+   Describe your changes and submit for review.
 
-Create a Feature Branch: (git checkout -b feature/AmazingFeature)
+### Areas to Contribute
 
-Commit Your Changes: (git commit -m 'Add some AmazingFeature')
+- 🐛 Bug Fixes  
+- 🌟 New Features  
+- 🎨 UI/UX Enhancements  
+- 📘 Documentation Updates
 
-Push to the Branch: (git push origin feature/AmazingFeature)
+---
 
-Open a Pull Request: Describe your changes and submit them for review.
-
-We welcome contributions in areas like:
-
-Bug fixes
-
-New feature development
-
-UI/UX improvements
-
-Documentation updates
 
